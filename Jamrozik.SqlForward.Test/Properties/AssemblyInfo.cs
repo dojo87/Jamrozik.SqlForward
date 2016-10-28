@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Jamrozik.SqlForward")]
+[assembly: AssemblyTitle("Jamrozik.SqlForward.Test")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Jamrozik.Net")]
-[assembly: AssemblyProduct("Jamrozik.SqlForward")]
-[assembly: AssemblyCopyright("Copyright © Jamrozik.Net 2016")]
+[assembly: AssemblyCompany("Licence Owner")]
+[assembly: AssemblyProduct("Jamrozik.SqlForward.Test")]
+[assembly: AssemblyCopyright("Copyright © Licence Owner 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("4f483716-acc6-4ed4-8a64-a96fca8c6323")]
+[assembly: Guid("6e57a0b3-d9c2-4523-ba5e-e124e5fbe9f1")]
 
 // Version information for an assembly consists of the following four values:
 //
