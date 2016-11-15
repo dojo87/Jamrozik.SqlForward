@@ -1,6 +1,6 @@
 # Jamrozik.SqlForward
 
-The DatabaseMigration class executes SQL scripts in a certain location accordingly to their file name order one by one just like migrations would be executed on a CodeFirst solution.
+The DatabaseMigration class executes SQL scripts in a certain location accordingly to their file name order one by one just like migrations would be executed on a CodeFirst solution. So it is a Database First automatic migrations solution.
 
 The usage of DatabaseMigration is as follows:
 - Specify SqlForward.DatabaseScripts App Setting as the folder where scripts will be held. You can use virtual ~ tilda in Web environments.
