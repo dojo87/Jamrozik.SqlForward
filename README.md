@@ -52,3 +52,39 @@ migration.Changed += (o, e) => System.Console.WriteLine(e.Message); // logging s
 
 migration.Synchronize(); // migrate all pending migrations.
 ```
+
+# Passing Parameters
+The library is capable of using parametrized scripts.
+There are two properties on the DatabaseMigratio class:
+- ScriptLogParameters
+- ScriptParameters
+Both properties are pre-initialized Dictionary types with overloaded .Add methods.
+You have to defined the parameter name, the DbType and the factory function that returns the value.
+
+The ScriptLogParameters define parameters which you may pass down to the INSERT script that writes the executed migrations.
+Adding those parameters would probably mean, that you also want to edit the DatabaseMigration.ScriptLogInsert property ;)
+
+The ScriptLog Parameters are applied to every migration script that is run.
+
+Lets consider this example:
+```csharp
+DatabaseMigration migration = Initialize(); // Magic initialization ;) see first examples to see that.
+
+// For parameters in the migration scripts.
+migration.ScriptParameters
+	.Add("TestApplicationName", DbType.String, 
+	(script, parameter) => ConfigurationManager.AppSettings["TestApplicationName"]); 
+	
+// It will work for an example SQL migration script:
+// INSERT INTO SomeTable (MyApplication) VALUES (@TestApplicationName)
+
+// For parameters in the ScriptLog - e.g. you want to write the user that executed the script. 
+            
+migration.ScriptLogParameters
+	.Add("user", DbType.String, (script, parameter) => "SuperUser");
+
+migration.ScriptLogInsert = "INSERT INTO ScriptLog (ScriptName, ScriptDate, Status, DomainUser) VALUES 		   (@name,GETDATE(),'DONE',@user);"; // Note, that @name is built in - it's the migration name. 
+            
+migration.Synchronize(); // Fire up
+
+```
