@@ -39,8 +39,6 @@ namespace Jamrozik.SqlForward
             if (this.ConnectionFactory == null){
                 throw new ArgumentNullException("No connection factory provided");
             }
-
-            this.User = "none";
         }
 
         #region Properties
@@ -89,17 +87,46 @@ namespace Jamrozik.SqlForward
         public DatabaseMigrationStage CurrentDatabaseMigrationStage { get; protected set; } = DatabaseMigrationStage.None;
 
         /// <summary>
-        /// Gets or sets the user that can be setup for a migration, so that it will be logged in the ScriptLog migration table.
-        /// </summary>
-        public string User
-        {
-            get;set;
-        }
-        /// <summary>
         /// Specifies an event on any change in stage or progress in migrations.
         /// </summary>
         public event EventHandler<DatabaseMigrationEventArgs> Changed;
-        
+
+        /// <summary>
+        /// ScriptParameter collection is for resolving at runtime any parameters that are suppose to be subsituted
+        /// when executing a script. The delegate which is the factory defines the object return value for a given parameter and given
+        /// script name. 
+        /// </summary>
+        /// <remarks>
+        /// To pass parametric values to the scripts executed on the database, you can define them in the ScriptParameters:
+        /// <code>
+        ///   ((DatabaseMigration)migration).ScriptParameters
+        ///     .Add("TestApplicationName", DbType.String, (script, parameter) => ConfigurationManager.AppSettings["TestApplicationName"]); 
+        /// </code>
+        /// This example shows how to bind a parameter in the migration script named @TestApplicationName to a value from the AppSettings. 
+        /// </remarks>
+        public virtual MigrationParameterColletion ScriptParameters { get; protected set; } = new MigrationParameterColletion();
+
+        /// <summary>
+        /// ScriptLogParameter collection is for resolving at runtime any parameters that are suppose to be subsituted
+        /// when executing the script that writes to the migration log. The delegate which is the factory defines the object return value for a given parameter and given
+        /// script name. 
+        /// </summary>
+        /// <remarks>
+        /// To pass parametric values to the script writting into the script log, you can define them in the ScriptLogParameters:
+        /// <code>
+        ///   ((DatabaseMigration)migration).ScriptLogParameters
+        ///     .Add("TestApplicationName", DbType.String, (script, parameter) => ConfigurationManager.AppSettings["TestApplicationName"]); 
+        /// </code>
+        /// This example shows how to bind a parameter in the INSERT script named @TestApplicationName to a value from the AppSettings. 
+        /// </remarks>
+        public virtual MigrationParameterColletion ScriptLogParameters { get; protected set; } = new MigrationParameterColletion();
+
+        /// <summary>
+        /// Gets or sets the Insert script used for adding information about migrations executed on the database.
+        /// Please ensure that it is parametrized so that it will not be vulnerable for SQL injection. The parameter values
+        /// are defined by factory methods in the ScriptLogParameters.
+        /// </summary>
+        public string ScriptLogInsert { get; set; } = "INSERT INTO ScriptLog(ScriptName, ScriptDate, Status, DomainUser) VALUES(@name, GETDATE(),NULL,NULL);";
 
         #endregion Properties
 
@@ -174,7 +201,7 @@ namespace Jamrozik.SqlForward
         {
             string scriptLogCreation = Path.Combine(scriptsFolder, InitializationScript);
             this.CurrentDatabaseMigrationStage = DatabaseMigrationStage.Initializing;
-            ExecuteScriptInTransaction(scriptLogCreation);
+            ExecuteScriptInTransaction(scriptLogCreation, ScriptLogParameters);
         }
 
         /// <summary>
@@ -221,7 +248,7 @@ namespace Jamrozik.SqlForward
                 {
                     Log(this.CurrentDatabaseMigrationStage, $"Starting {scriptsExecutedCount + 1}/{pending} migration {fileName}", fileName);
 
-                    ExecuteScriptInTransaction(file);
+                    ExecuteScriptInTransaction(file, ScriptParameters);
                     RecordMigrationExecuted(fileName);
                     scriptsExecutedCount++;
                 }
@@ -240,9 +267,16 @@ namespace Jamrozik.SqlForward
         private void RecordMigrationExecuted(string fileName)
         {
             IDbCommand insertScriptLog = this.Connection.CreateCommand();
-            insertScriptLog.CommandText = $"INSERT INTO ScriptLog (ScriptName, ScriptDate, Status, DomainUser) VALUES (@fileName,GETDATE(),'Done',@username); ";
-            AddParameterToCommand(insertScriptLog, DbType.String, "fileName", fileName);
-            AddParameterToCommand(insertScriptLog, DbType.String, "username", this.User);
+            insertScriptLog.CommandText = this.ScriptLogInsert;
+            AddParameterToCommand(insertScriptLog, DbType.String, "name", fileName);
+            if (ScriptLogParameters.Count > 0)
+            {
+                foreach (var parameter in ScriptLogParameters)
+                {
+                    AddParameterToCommand(insertScriptLog, parameter.Value.DatabaseType , parameter.Value.Name, parameter.Value.Value(fileName));
+                }
+            }
+
             insertScriptLog.ExecuteNonQuery();
         }
 
@@ -282,7 +316,8 @@ namespace Jamrozik.SqlForward
         /// Executes the given script in a transaction.
         /// </summary>
         /// <param name="script"></param>
-        private void ExecuteScriptInTransaction(string script)
+        /// <param name="parameterCollection">The parameter collection to use.</param>
+        protected virtual void ExecuteScriptInTransaction(string script, MigrationParameterColletion parameterCollection)
         {
             using (IDbTransaction transaction = this.Connection.BeginTransaction())
             {
@@ -294,6 +329,15 @@ namespace Jamrozik.SqlForward
                     string scriptCommand = File.ReadAllText(script);
                     IDbCommand initializationCommand = this.Connection.CreateCommand();
                     initializationCommand.CommandText = scriptCommand;
+
+                    if (parameterCollection.Count > 0)
+                    {
+                        foreach (var parameter in parameterCollection)
+                        {
+                            AddParameterToCommand(initializationCommand, parameter.Value.DatabaseType, parameter.Value.Name, parameter.Value.Value(Path.GetFileName(script)));
+                        }
+                    }
+
                     initializationCommand.Transaction = transaction;
                     initializationCommand.ExecuteNonQuery();
                     transaction.Commit();

@@ -42,6 +42,7 @@ namespace Jamrozik.SqlForward.Test
         protected IDbConnection InitializeConnectionForTests()
         {
             var connection = new System.Data.SqlClient.SqlConnection(ConfigurationManager.ConnectionStrings["DefaultTestConnection"].ConnectionString);
+            //var connection = new MySql.Data.MySqlClient.MySqlConnection(ConfigurationManager.ConnectionStrings["DefaultMySQLConnection"].ConnectionString);
             connection.Open();
             return connection;
         }
@@ -168,6 +169,41 @@ namespace Jamrozik.SqlForward.Test
                 Assert.AreEqual(1, count, "Mytable should have only one entry, because Rev003 shouldn't be executed if Rev002 failed..");
             }
 
+        }
+
+        [Test]
+        public void TestApplicationParameters()
+        {
+            // First Migrations
+            DatabaseMigration migration = Initialize();
+            migration.DatabaseScripts = "./DatabaseMigrations/TestParameter/";
+            migration.ScriptParameters
+                .Add("user", DbType.String, (script, parameter) => "SuperUser");
+
+            migration.ScriptParameters
+               .Add("TestApplicationName", DbType.String, (script, parameter) => ConfigurationManager.AppSettings["TestApplicationName"]);
+            
+            migration.ScriptLogParameters
+                .Add("user", DbType.String, (script, parameter) => "SuperUser");
+
+            migration.ScriptLogParameters
+                .Add("TestApplicationName", DbType.String, (script, parameter) => ConfigurationManager.AppSettings["TestApplicationName"]);
+            
+            migration.ScriptLogInsert = "INSERT INTO ScriptLog (ScriptName, ScriptDate, Status, DomainUser) VALUES (@name,GETDATE(),'DONE',@user);";
+            migration.Synchronize();
+
+            using (IDbConnection connection = InitializeConnectionForTests())
+            {
+                IDbCommand command = connection.CreateCommand();
+                command.CommandText = "SELECT COUNT(*) FROM ScriptLog WHERE DomainUser IS NOT NULL";
+                var count = (int)command.ExecuteScalar();
+                Assert.Greater(count,0, "The entries with a not null user should exist in the database");
+
+                command = connection.CreateCommand();
+                command.CommandText = "SELECT COUNT(*) FROM Mytable WHERE GoodTable = 'SuperUser'";
+                count = (int)command.ExecuteScalar();
+                Assert.AreEqual(1, count, "Mytable should have an entry with a dynamic parameter user (GoodTable column) resolved to 'SuperUser'");
+            }
         }
 
     }
