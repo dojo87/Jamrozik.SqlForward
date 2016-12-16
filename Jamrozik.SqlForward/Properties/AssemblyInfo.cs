@@ -6,12 +6,12 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Jamrozik.SqlForward")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("The right tool for Database First Migrations. The DatabaseMigration class executes SQL scripts in a certain location accordingly to their file name order one by one just like migrations would be executed on a CodeFirst solution.So it is a Database First automatic migrations solution.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Jamrozik.Net")]
 [assembly: AssemblyProduct("Jamrozik.SqlForward")]
 [assembly: AssemblyCopyright("Copyright © Jamrozik.Net 2016")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyTrademark("Jamrozik.Net")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("0.1.*")]
+[assembly: AssemblyFileVersion("0.1.*")]
