@@ -25,12 +25,13 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Web;
 
 namespace Jamrozik.SqlForward
 {
+    public delegate IDbConnection ConnectionFactory();
+
     /// <summary>
     /// The DatabaseMigration class executes SQL scripts in a certain location accordingly to their file name order one by one
     /// just like migrations would be executed on a CodeFirst solution. 
@@ -53,7 +54,7 @@ namespace Jamrozik.SqlForward
         /// of interface IDbConnection. It ensures, that the connection is used only by the migrator
         /// and no other function, because the connection returned by the connectionFactory is
         /// used and disposed after the migration process. The connection isn't reusable.</param>
-        public DatabaseMigration(Func<IDbConnection> connectionFactory)
+        public DatabaseMigration(ConnectionFactory connectionFactory)
         {
             this.ConnectionFactory = connectionFactory;
             if (this.ConnectionFactory == null){
@@ -66,7 +67,7 @@ namespace Jamrozik.SqlForward
         /// <summary>
         /// Gets or privetly sets the ConnectionFactory creating the IDbConnection instance.
         /// </summary>
-        protected Func<IDbConnection> ConnectionFactory
+        protected ConnectionFactory ConnectionFactory
         {
             get;
             private set;
@@ -245,7 +246,9 @@ namespace Jamrozik.SqlForward
         /// <returns>A list of migrations (all, pending and executed alike)</returns>
         private static List<string> GetScriptsToExecute(string scriptsFolder)
         {
-            return Directory.GetFiles(scriptsFolder, "*.sql").OrderBy(s => s).ToList();
+            var files = new List<string>(Directory.GetFiles(scriptsFolder, "*.sql"));
+            files.Sort();
+            return files;
         }
 
         /// <summary>
@@ -256,7 +259,15 @@ namespace Jamrozik.SqlForward
         /// <param name="files">List of files in the migration folder. </param>
         private void IterateMigrations(string specificMigration, List<string> executedScriptNames, List<string> files)
         {
-            var pending = files.Count(f => !executedScriptNames.Contains(Path.GetFileName(f)));
+            int pending = 0;
+            for (var i = 0; i < files.Count; i++)
+            {
+                if (!executedScriptNames.Contains(Path.GetFileName(files[i])))
+                {
+                    pending++;
+                }
+            }
+
             Log(DatabaseMigrationStage.CheckingPendingMigrations, $"There are {pending} pending migrations. {files.Count} all migrations, {executedScriptNames.Count} already executed migrations");
 
             this.CurrentDatabaseMigrationStage = DatabaseMigrationStage.Migrating;
