@@ -96,3 +96,6 @@ migration.ScriptLogInsert = "INSERT INTO ScriptLog (ScriptName, ScriptDate, Stat
 migration.Synchronize(); // Fire up
 
 ```
+
+# .NET Framework
+The NuGet package and the code itself is prepared for .NET 2.0, .NET 3.5, .NET 4.0, .NET 4.6.2
