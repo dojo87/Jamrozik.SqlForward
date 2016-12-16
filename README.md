@@ -1,6 +1,8 @@
 # Jamrozik.SqlForward
+Licensed under MIT:
+https://opensource.org/licenses/MIT
 
-The right tool for Database First Migrations
+The tool for Database First Migrations
 
 The DatabaseMigration class executes SQL scripts in a certain location accordingly to their file name order one by one just like migrations would be executed on a CodeFirst solution. So it is a Database First automatic migrations solution.
 
