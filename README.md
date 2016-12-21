@@ -26,7 +26,7 @@ The usage of DatabaseMigration is as follows:
 ```
 
 # The Initialization.sql
-I plan to make the ScriptLog table a little more flexible, so the initialization SQL is given as an SQL file. It should be in the DatabaseMigration folder
+The Basic Script log needs to have the ScriptName and ScriptDate columnd. Other columns can be added and parametrized in the process. A basic concept for the ScriptLog table is:
 
 ```SQL
 IF (NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND  TABLE_NAME = 'ScriptLog'))
