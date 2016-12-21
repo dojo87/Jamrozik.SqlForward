@@ -14,8 +14,8 @@ The DatabaseMigration class executes SQL scripts in a certain location according
 
 The usage of DatabaseMigration is as follows:
 - Specify SqlForward.DatabaseScripts App Setting as the folder where scripts will be held. You can use virtual ~ tilda in Web environments.
-- Specify SqlForward.Initialization App Setting to the SQL file containing the initial database setup (e.g. Initialization.sql).
-- Initialize the migrator with a factory function initializing a IDbConnection instance representing the database. 
+- Specify SqlForward.Initialization App Setting to the SQL file containing the initial database setup (e.g. Initialization.sql). Source code contains a basic Initialization.sql but it can be adjusted to needs.
+- Initialize the migrator with a factory function initializing a IDbConnection instance representing the database (MSSQL, MySQL,...). 
 - Run the Synchronize method. Try-Catch if you want to react to migration errors. You can also control the process by adding an event handler to Changed event.
 
 # The app.config/web.config App Settings
